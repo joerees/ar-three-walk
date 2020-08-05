@@ -1,16 +1,30 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOrientationControls.js";
 import * as Dat from "dat.gui/build/dat.gui.js";
 import SpotLight from "./SpotLight.js";
 
-export default function ARScene(_container) {
+import isMobile from "ismobilejs";
+
+function isMobileDevice() {
+  const ua = navigator.userAgent;
+  const isIOS =
+    (/iPad|iPhone|iPod/.test(navigator.platform) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) &&
+    !window.MSStream;
+  return isMobile(ua).any || isIOS;
+}
+
+export default function ARScene(_container, _loadProgressCallback) {
+  let loadProgressCallback = _loadProgressCallback;
   let container = document.getElementById(_container);
   let width = container.clientWidth;
   let height = container.clientHeight;
   let path = getPath();
   let scene, camera, renderer, controls, mixer;
-  var percentage = 0, speed = 0.2; // Path animations
+  var percentage = 0,
+    speed = 0.2; // Path animations
   let spotlights = [];
   let gui = new Dat.GUI({ autoplace: true });
   let clock = new THREE.Clock();
@@ -44,12 +58,14 @@ export default function ARScene(_container) {
           settings.camera.position.y,
           settings.camera.position.z
         );
-        controls.target.set(
-          settings.camera.target.x,
-          settings.camera.target.y,
-          settings.camera.target.z
-        );
-        controls.update();
+        if (controls) {
+          controls.target.set(
+            settings.camera.target.x,
+            settings.camera.target.y,
+            settings.camera.target.z
+          );
+          controls.update();
+        }
         camera.updateProjectionMatrix();
         render();
         console.log(settings);
@@ -80,14 +96,6 @@ export default function ARScene(_container) {
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
 
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.enableKeys = false;
-    controls.minDistance = 0;
-    controls.maxDistance = 100;
-    controls.maxPolarAngle = Math.PI / 2.2;
-    controls.target.set(0, 0, 0);
-    controls.update();
     settings.camera.update();
 
     var light = new THREE.AmbientLight(0x404040); // soft white light
@@ -116,6 +124,23 @@ export default function ARScene(_container) {
     setupGUI();
     setupSpotLights();
     loadModel();
+  };
+
+  this.startApp = function (event) {
+    if (isMobileDevice()) {
+      controls = new DeviceOrientationControls(camera);
+      controls.connect();
+    } else {
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.enableKeys = false;
+      controls.minDistance = 0;
+      controls.maxDistance = 100;
+      controls.maxPolarAngle = Math.PI / 2.2;
+      controls.target.set(0, 0, 0);
+      controls.update();
+      settings.camera.update();
+    }
   };
 
   var setupGUI = function () {
@@ -206,9 +231,7 @@ export default function ARScene(_container) {
 
         onLoadComplete();
       },
-      (progress) => {
-        console.log("progress", progress);
-      },
+      loadProgressCallback,
 
       (error) => {
         console.log(error);
@@ -260,7 +283,6 @@ export default function ARScene(_container) {
     spotlights = [spotLight1, spotLight2];
   };
 
-  
   function animate() {
     requestAnimationFrame(animate);
     render();
@@ -281,7 +303,7 @@ export default function ARScene(_container) {
     }
 
     if (mixer) mixer.update(delta);
-    if (isAnimating) {
+    if (isAnimating && controls) {
       controls.update();
     }
     renderer.render(scene, camera);
