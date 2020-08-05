@@ -1,25 +1,22 @@
 import * as THREE from "three";
 
 export default function SpotLight(scene, gui, render, _params) {
-  //  console.log('SpotLight', scene, gui)
+
   var _gui = gui;
   var _title = _params.title || new Date() + "";
 
   var renderCallback = render;
 
-  var spotLight = new THREE.SpotLight(0xffffff, 1); //THREE.SpotLight(0xffffff,5,10,THREE.Math.degToRad(10),0.25);
+  var spotLight = new THREE.SpotLight(0xffffff, 1);
   spotLight.position.set(2, 4, 2);
   spotLight.angle = Math.PI / 4;
   spotLight.penumbra = 0.05;
   spotLight.decay = 2;
   spotLight.distance = 200;
   spotLight.castShadow = true;
-  // spotLight.shadowDarkness = 0.5;
-  // spotLight.shadowCameraVisible = true;
 
   this.spotLight = spotLight;
 
-  //Set up shadow properties for the light
   spotLight.shadow.mapSize.width = 2048; // default
   spotLight.shadow.mapSize.height = 2048; // default
   spotLight.shadow.camera.near = 0.5; // default
@@ -27,12 +24,9 @@ export default function SpotLight(scene, gui, render, _params) {
 
   var spotLightHelper = new THREE.SpotLightHelper(spotLight, 0x00ffff);
   spotLight.add(spotLightHelper);
-
   spotLight.position.set(3, 50, 140);
-  //spotLight.target = spotLightTarget;
 
   scene.add(spotLight.target);
-
   var params = _params || {
     color: 12500676,
     intensity: 1.580113734275375,
@@ -75,10 +69,7 @@ export default function SpotLight(scene, gui, render, _params) {
     spotLight.shadow.camera.near = params.shadowMap.near;
     spotLight.shadow.camera.far = params.shadowMap.far;
 
-    // spotLight.target = spotLightTarget;
-    // spotLight.lookAt(spotLightTarget);
     spotLightHelper.update();
-
     console.log(JSON.stringify(params));
     renderCallback();
   };
@@ -109,18 +100,12 @@ export default function SpotLight(scene, gui, render, _params) {
   setupGUI();
   updateSpotLight();
 
+  this.setTarget = (v) => {
+    console.log("setTarget", v);
+  };
   this.update = function () {
     updateSpotLight();
   };
-
-  this.setPosition = function () {
-    // rootNode.position =
-  };
-
-  this.update = function (delta) {
-    this.carControls.update(delta);
-  };
-
   return spotLight;
 }
 
@@ -128,14 +113,8 @@ SpotLight.prototype = {
   get position() {
     return this.spotLight.position;
   },
-
-  loadModel: function () {
-    console.log("Car.prototype : loadModel");
-    // model
-  },
-
-  setupHeadlights: function () {
-    console.log("setupHeadlights");
+  set targetPosition(vector) {
+    this.setTarget(vector);
   },
 };
 export { SpotLight };

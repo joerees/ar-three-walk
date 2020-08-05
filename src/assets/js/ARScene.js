@@ -8,9 +8,13 @@ export default function ARScene(_container) {
   let container = document.getElementById(_container);
   let width = container.clientWidth;
   let height = container.clientHeight;
+  let path = getPath();
   let scene, camera, renderer, controls, mixer;
+  var percentage = 0, speed = 0.2; // Path animations
+  let spotlights = [];
   let gui = new Dat.GUI({ autoplace: true });
   let clock = new THREE.Clock();
+  let charecter = null;
   var customContainer = document.getElementById("gui-container");
   customContainer.appendChild(gui.domElement);
 
@@ -62,23 +66,16 @@ export default function ARScene(_container) {
     },
   };
 
-  //, controls, spotLight, target
-  console.log("_container");
   const setupScene = () => {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     scene.fog = new THREE.Fog(0x000000, 5, 1000);
-    // setupEnvironment(scene);
     camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.updateProjectionMatrix();
-    // Renderer
     renderer = new THREE.WebGLRenderer({
       antialias: true,
     });
     renderer.setSize(container.clientWidth, container.clientHeight);
-    /* renderer.gammaFactor = 1.2;
-    renderer.outputEncoding = THREE.GammaEncoding;
-    renderer.physicallyBasedShading = true;*/
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
@@ -88,10 +85,7 @@ export default function ARScene(_container) {
     controls.enableKeys = false;
     controls.minDistance = 0;
     controls.maxDistance = 100;
-    //controls.rotateSpeed = -1.5;
     controls.maxPolarAngle = Math.PI / 2.2;
-    //controls.minPolarAngle = Math.PI / 3.5;
-    // controls.addEventListener("change", render);
     controls.target.set(0, 0, 0);
     controls.update();
     settings.camera.update();
@@ -163,8 +157,32 @@ export default function ARScene(_container) {
     f.add(settings.fog, "far", 0, 1000, 1).onChange(settings.fog.update);
   };
 
+  // Charecture walk path
+  function getPath() {
+    var curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-10, 0, 0),
+      new THREE.Vector3(-5, 0, 5),
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(5, 0, 5),
+      new THREE.Vector3(10, 0, 10),
+    ]);
+    return curve;
+  }
+
+  // Add path to scene
+  function drawPath() {
+    var curve = getPath();
+    var points = curve.getPoints(50);
+    var geometry = new THREE.BufferGeometry().setFromPoints(points);
+    var material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    var curveObject = new THREE.Line(geometry, material);
+    scene.add(curveObject);
+  }
+
+  // Model Loaded.
   function onLoadComplete() {
     isAnimating = true;
+    drawPath();
     animate();
   }
 
@@ -174,25 +192,18 @@ export default function ARScene(_container) {
     loader.load(
       "./3d/scene.glb",
       (gltf) => {
+        charecter = gltf.scene;
         gltf.scene.traverse(function (node) {
           if (node.isMesh) {
-            console.log(node);
             node.receiveShadow = true;
             node.castShadow = true;
           }
         });
-        console.log("gltf", gltf);
         scene.add(gltf.scene);
-
         mixer = new THREE.AnimationMixer(gltf.scene);
         var action = mixer.clipAction(gltf.animations[0]);
         action.play();
 
-        gltf.animations; // Array<THREE.AnimationClip>
-        gltf.scene; // THREE.Group
-        gltf.scenes; // Array<THREE.Group>
-        gltf.cameras; // Array<THREE.Camera>
-        gltf.asset; // Object
         onLoadComplete();
       },
       (progress) => {
@@ -223,8 +234,8 @@ export default function ARScene(_container) {
       target: { x: -0.49, y: 0, z: 0 },
       shadowMap: { size: 512, near: 0.5, far: 500 },
     };
-    let spotLight = new SpotLight(scene, gui, render, params);
-    scene.add(spotLight);
+    let spotLight1 = new SpotLight(scene, gui, render, params);
+    scene.add(spotLight1);
 
     params = {
       title: "Spotlight Right",
@@ -242,10 +253,14 @@ export default function ARScene(_container) {
       target: { x: 0, y: 0, z: 0 },
       shadowMap: { size: 512, near: 0.5, far: 500 },
     };
-    spotLight = new SpotLight(scene, gui, render, params);
-    scene.add(spotLight);
+    let spotLight2 = new SpotLight(scene, gui, render, params);
+    scene.add(spotLight2);
+
+    // one of thesr lights will follow path.
+    spotlights = [spotLight1, spotLight2];
   };
 
+  
   function animate() {
     requestAnimationFrame(animate);
     render();
@@ -253,6 +268,18 @@ export default function ARScene(_container) {
 
   function render() {
     var delta = clock.getDelta();
+    percentage += speed * 0.005;
+    percentage = percentage >= 1 - 0.001 ? 0 : percentage;
+    var p1 = path.getPointAt(percentage % 1);
+    var p2 = path.getPointAt(percentage + (0.0001 % 1));
+    if (charecter) {
+      charecter.position.x = p1.x;
+      charecter.position.z = p1.z;
+      charecter.lookAt(p2);
+      spotlights[0].target.position.set(p1.x, 0, p1.z);
+      spotlights[1].target.position.set(p1.x, 0, p1.z);
+    }
+
     if (mixer) mixer.update(delta);
     if (isAnimating) {
       controls.update();
