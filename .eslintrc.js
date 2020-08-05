@@ -14,8 +14,7 @@ module.exports = {
     "codeFrame": false    
   },
   extends: [
-    'plugin:prettier/recommended',
-    'prettier',
+    'plugin:prettier/recommended'
   ],
   plugins: [
     'prettier'

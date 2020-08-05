@@ -119,12 +119,6 @@ export default function ARScene(_container) {
     mesh.position.y = -0;
     scene.add(mesh);
 
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    var cube = new THREE.Mesh(geometry, material);
-    cube.castShadow = true;
-    scene.add(cube);
-
     setupGUI();
     setupSpotLights();
     loadModel();
@@ -178,7 +172,7 @@ export default function ARScene(_container) {
     const loader = new GLTFLoader();
 
     loader.load(
-      "/3d/scene.glb",
+      "./3d/scene.glb",
       (gltf) => {
         gltf.scene.traverse(function (node) {
           if (node.isMesh) {
