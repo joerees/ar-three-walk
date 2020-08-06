@@ -4,6 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOrientationControls.js";
 import * as Dat from "dat.gui/build/dat.gui.js";
 import SpotLight from "./SpotLight.js";
+import SurfacePath from "./SurfacePath.js";
 
 import isMobile from "ismobilejs";
 
@@ -30,7 +31,11 @@ export default function ARScene(_container, _loadProgressCallback) {
   let clock = new THREE.Clock();
   let charecter = null;
   var customContainer = document.getElementById("gui-container");
-  customContainer.appendChild(gui.domElement);
+  // customContainer.appendChild(gui.domElement);
+
+
+  // Audio.
+  var listener, sound;
 
   var isAnimating = false;
 
@@ -85,7 +90,7 @@ export default function ARScene(_container, _loadProgressCallback) {
   const setupScene = () => {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.Fog(0x000000, 5, 1000);
+    scene.fog = new THREE.Fog(0x000000, 5, 60);
     camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.updateProjectionMatrix();
     renderer = new THREE.WebGLRenderer({
@@ -118,15 +123,31 @@ export default function ARScene(_container, _loadProgressCallback) {
     );
     mesh.rotation.x = -Math.PI / 2;
     mesh.receiveShadow = true;
-    mesh.position.y = -0;
+    mesh.position.y = -0.02;
     scene.add(mesh);
-
     setupGUI();
     setupSpotLights();
-    loadModel();
+    setupAudio(camera);
   };
 
+  function setupAudio(camera) {
+    var url = "./audio/Pictures_of_the_Floating_World_-_Waves.ogg";
+    // create an AudioListener and add it to the camera
+    listener = new THREE.AudioListener();
+    camera.add(listener);
+    // create the PositionalAudio object (passing in the listener)
+    sound = new THREE.PositionalAudio(listener);
+    // load a sound and set it as the PositionalAudio object's buffer
+    var audioLoader = new THREE.AudioLoader();
+    audioLoader.load(url, function (buffer) {
+      sound.setBuffer(buffer);
+      sound.setRefDistance(2);
+      loadModel();
+    });
+  }
+
   this.startApp = function (event) {
+    sound.play();
     if (isMobileDevice()) {
       controls = new DeviceOrientationControls(camera);
       controls.connect();
@@ -185,12 +206,19 @@ export default function ARScene(_container, _loadProgressCallback) {
   // Charecture walk path
   function getPath() {
     var curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-10, 0, 0),
-      new THREE.Vector3(-5, 0, 5),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(5, 0, 5),
-      new THREE.Vector3(10, 0, 10),
+      //  new THREE.Vector3(0, 0, -5.5),
+      new THREE.Vector3(2, 0, -6),
+      new THREE.Vector3(5, 0, -7.5),
+      new THREE.Vector3(8, 0, -8),
+      new THREE.Vector3(8, 0, -10),
+      new THREE.Vector3(0, 0, -10),
+      new THREE.Vector3(-8, 0, -10),
+      new THREE.Vector3(-8, 0, -8),
+      new THREE.Vector3(-5, 0, -7.5),
+      new THREE.Vector3(-2, 0, -6),
     ]);
+    curve.type = "catmullrom";
+    curve.closed = true;
     return curve;
   }
 
@@ -202,6 +230,11 @@ export default function ARScene(_container, _loadProgressCallback) {
     var material = new THREE.LineBasicMaterial({ color: 0xff0000 });
     var curveObject = new THREE.Line(geometry, material);
     scene.add(curveObject);
+
+    var p = new SurfacePath(curve);
+    p.receiveShadow = true;
+    p.castShadow = true;
+    scene.add(p);
   }
 
   // Model Loaded.
@@ -225,6 +258,7 @@ export default function ARScene(_container, _loadProgressCallback) {
           }
         });
         scene.add(gltf.scene);
+        gltf.scene.add(sound);
         mixer = new THREE.AnimationMixer(gltf.scene);
         var action = mixer.clipAction(gltf.animations[0]);
         action.play();
@@ -243,7 +277,7 @@ export default function ARScene(_container, _loadProgressCallback) {
   var setupSpotLights = () => {
     var params = {
       title: "Spotlight Left",
-      color: 16777215,
+      color: 15443845,
       intensity: 0.47216956746510425,
       distance: 45.08013096674134,
       angle: 0.35117119328426316,
@@ -262,7 +296,7 @@ export default function ARScene(_container, _loadProgressCallback) {
 
     params = {
       title: "Spotlight Right",
-      color: 11184810,
+      color: 6384383,
       intensity: 0.4942271239014303,
       distance: 18.611063243150095,
       angle: 0.46666428871177007,

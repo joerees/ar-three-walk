@@ -23,7 +23,7 @@ export default function SpotLight(scene, gui, render, _params) {
   spotLight.shadow.camera.far = 500; // default
 
   var spotLightHelper = new THREE.SpotLightHelper(spotLight, 0x00ffff);
-  spotLight.add(spotLightHelper);
+  //spotLight.add(spotLightHelper);
   spotLight.position.set(3, 50, 140);
 
   scene.add(spotLight.target);
@@ -70,7 +70,7 @@ export default function SpotLight(scene, gui, render, _params) {
     spotLight.shadow.camera.far = params.shadowMap.far;
 
     spotLightHelper.update();
-    console.log(JSON.stringify(params));
+   // console.log(JSON.stringify(params));
     renderCallback();
   };
 
@@ -101,7 +101,7 @@ export default function SpotLight(scene, gui, render, _params) {
   updateSpotLight();
 
   this.setTarget = (v) => {
-    console.log("setTarget", v);
+    //console.log("setTarget", v);
   };
   this.update = function () {
     updateSpotLight();
