@@ -10,8 +10,7 @@ export default function World() {
   let clock = new THREE.Clock();
   let path = getPath();
   let spotlights = [];
-  var percentage = 0,
-    speed = 0.2; // Path animations
+  var percentage = 0, speed = 0.2; // Path animations
   var mixer;
   var charecter;
   this.type = "Object3D";
@@ -31,7 +30,7 @@ export default function World() {
       size / 10,
       size / 10,
       new THREE.Color(0xffffff),
-      new THREE.Color(0x000000)
+      new THREE.Color(0xcccccc)
     );
     gridHelper.position.y = -0.4;
     gridHelper.position.z = -10;
@@ -56,10 +55,12 @@ export default function World() {
     ]);
     curve.type = "catmullrom";
     curve.closed = true;
+
     return curve;
   }
   // Add path to scene
   function drawPath() {
+    /*
     var curve = getPath();
     var points = curve.getPoints(50);
     var geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -71,6 +72,19 @@ export default function World() {
     p.receiveShadow = true;
     p.castShadow = true;
     el.add(p);
+*/
+    var planeGeometry = new THREE.PlaneBufferGeometry( 2000, 2000 );
+    planeGeometry.rotateX( - Math.PI / 2 );
+
+    var planeMaterial = new THREE.ShadowMaterial();
+    planeMaterial.opacity = 0.2;
+
+    var plane = new THREE.Mesh( planeGeometry, planeMaterial );
+    plane.position.y = -0;
+    plane.position.z = -80;
+    plane.receiveShadow = true;
+    el.add( plane );
+
   }
 
   const loadModel = () => {
@@ -103,50 +117,28 @@ export default function World() {
     );
   };
 
-  var spotLightHelper;
   // Set up the lights.
-
-  var params = {
-    title: "Spotlight Left",
-    color: 15443845,
-    intensity: 0.47216956746510425,
-    distance: 45.08013096674134,
-    angle: 0.35117119328426316,
-    penumbra: 0.6134601832276251,
-    decay: 1.77649491642254,
-    near: 62.650000000000006,
-    far: 10000,
-    x: -6.115,
-    y: 4.4750000000000005,
-    z: 0,
-    target: { x: -0.49, y: 0, z: 0 },
-    shadowMap: { size: 512, near: 0.5, far: 500 },
-  };
   var setupSpotLights = () => {
     var spotLight1 = new THREE.SpotLight(0x616aff, 1);
     spotLight1.position.set(2, 4, 2);
     spotLight1.angle = 0.35117119328426316;
     spotLight1.penumbra = 0.6134601832276251;
-    spotLight1.decay = 1.7;
+    spotLight1.decay = 21.7;
     spotLight1.distance = 45;
     spotLight1.castShadow = true;
     spotLight1.intensity = 0.47;
     spotLight1.position.x = -6.115;
     spotLight1.position.y = 12.59;
     spotLight1.position.z = 0;
-    spotLight1.shadow.mapSize.width = 512;
-    spotLight1.shadow.mapSize.height = 512;
     spotLight1.target.position.set(-0.49, 0, 0);
-    spotLight1.shadow.mapSize.width = 512; // default
-    spotLight1.shadow.mapSize.height = 512; // default
+    spotLight1.shadow.mapSize.width = 1024; // default
+    spotLight1.shadow.mapSize.height = 1024; // default
     spotLight1.shadow.camera.near = 0.5; // default
     spotLight1.shadow.camera.far = 500; // default
 
     el.add(spotLight1);
     el.add(spotLight1.target);
 
-    spotLightHelper = new THREE.SpotLightHelper(spotLight1, 0x00ffff);
-    el.add(spotLightHelper);
 
     var spotLight2 = new THREE.SpotLight(0xcef542, 1);
     spotLight2.position.set(2, 4, 2);
@@ -159,13 +151,11 @@ export default function World() {
     spotLight2.position.x = 2.7;
     spotLight2.position.y = 12.59;
     spotLight2.position.z = 0;
-    spotLight2.shadow.mapSize.width = 512;
-    spotLight2.shadow.mapSize.height = 512;
     spotLight2.target.position.set(-0.49, 0, 0);
-    spotLight2.shadow.mapSize.width = 512; // default
-    spotLight2.shadow.mapSize.height = 512; // default
+    spotLight2.shadow.mapSize.width = 1024; // default
+    spotLight2.shadow.mapSize.height = 1024; // default
     spotLight2.shadow.camera.near = 0.5; // default
-    spotLight2.shadow.camera.far = 500; // default
+    spotLight2.shadow.camera.far = 1024; // default
 
     el.add(spotLight2);
     el.add(spotLight2.target);
@@ -176,7 +166,7 @@ export default function World() {
 
   this.update = () => {
     var delta = clock.getDelta();
-    percentage += speed * 0.003;
+    percentage += speed * 0.005;
     percentage = percentage >= 1 - 0.001 ? 0 : percentage;
     var p1 = path.getPointAt(percentage % 1);
     var p2 = path.getPointAt(percentage + (0.0001 % 1));

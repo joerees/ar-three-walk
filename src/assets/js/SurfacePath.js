@@ -23,9 +23,8 @@ export default function SurfacePath(path) {
 
   // Extrude the triangle along the CatmullRom curve
   this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  this.material = new THREE.MeshLambertMaterial({
-    color: 0x999999,
-    wireframe: false,
+  this.material = new THREE.MeshBasicMaterial({
+    color: 0xeeeeee,
   });
 }
 

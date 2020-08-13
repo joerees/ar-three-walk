@@ -22,7 +22,9 @@ export default {
   display: flex;
   flex-direction: column;
 }
-
+body{
+  margin : 0px; overflow: hidden;
+}
 
 
 </style>

@@ -1,9 +1,18 @@
 <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 <template>
- <a-scene>
+ <a-scene 
+      
+      arjs="sourceType: webcam; debugUIEnabled: false;" renderer="antialias: true;
+                   colorManagement: true;
+                   sortObjects: true;
+                   physicallyCorrectLights: true;"
+                   shadow="shadowMapType: pcfsoft">
+
      <a-entity walk-world></a-entity>
 </a-scene>
 </template>
+
+
 
 <script>
 import 'aframe'
