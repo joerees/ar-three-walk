@@ -33,7 +33,6 @@ export default function ARScene(_container, _loadProgressCallback) {
   var customContainer = document.getElementById("gui-container");
   // customContainer.appendChild(gui.domElement);
 
-
   // Audio.
   var listener, sound;
 
@@ -104,22 +103,26 @@ export default function ARScene(_container, _loadProgressCallback) {
     settings.camera.update();
 
     var light = new THREE.AmbientLight(0x404040); // soft white light
+    light.intensity = 2;
     scene.add(light);
 
-    let size = 100;
+    let size = 200;
     var gridHelper = new THREE.GridHelper(
-      size / 100,
-      size / 100,
+      size / 10,
+      size / 10,
       new THREE.Color(0xffffff),
       new THREE.Color(0x000000)
     );
     gridHelper.position.y = -0.4;
+    gridHelper.position.z = -10;
     gridHelper.visible = true;
     scene.add(gridHelper);
 
     var mesh = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(size, size),
-      new THREE.MeshPhongMaterial({ color: 0xffffff, depthWrite: false })
+      isMobileDevice()
+        ? new THREE.ShadowMaterial({ opacity: 0.5, depthWrite: false })
+        : new THREE.MeshPhongMaterial({ color: 0xeeeeee, depthWrite: false })
     );
     mesh.rotation.x = -Math.PI / 2;
     mesh.receiveShadow = true;
@@ -131,7 +134,8 @@ export default function ARScene(_container, _loadProgressCallback) {
   };
 
   function setupAudio(camera) {
-    var url = "./audio/Pictures_of_the_Floating_World_-_Waves.ogg";
+    var url =
+      "https://congas.drjo.eu/walk/audio/Pictures_of_the_Floating_World_-_Waves.ogg";
     // create an AudioListener and add it to the camera
     listener = new THREE.AudioListener();
     camera.add(listener);
@@ -139,18 +143,74 @@ export default function ARScene(_container, _loadProgressCallback) {
     sound = new THREE.PositionalAudio(listener);
     // load a sound and set it as the PositionalAudio object's buffer
     var audioLoader = new THREE.AudioLoader();
-    audioLoader.load(url, function (buffer) {
-      sound.setBuffer(buffer);
-      sound.setRefDistance(2);
-      loadModel();
-    });
+    audioLoader.load(
+      url,
+      function (buffer) {
+        sound.setBuffer(buffer);
+        sound.setRefDistance(2);
+        console.log("audio-loaded");
+        // loadModel();
+      },
+      // onProgress callback
+      function (xhr) {
+        console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+      },
+
+      // onError callback
+      function (err) {
+        console.log("An error happened", err);
+      }
+    );
+
+    loadModel();
   }
 
+  function setupVideoTexture() {
+    const background = document.getElementById("video");
+    var videoTexture = new THREE.VideoTexture(background);
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      var constraints = {
+        video: { width: 1280, height: 720, facingMode: "environment" },
+      };
+
+      navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then(function (stream) {
+          background.srcObject = stream;
+          background.play();
+        })
+        .catch(function (error) {
+          console.error("Unable to access the camera/webcam.", error);
+        });
+    } else {
+      console.error("MediaDevices interface not available.");
+    }
+    scene.background = videoTexture;
+  }
+
+  function addEventListeners(){
+    //window.addEventListener("devicemotion", onDeviceMotion);
+  }
+
+  const direction = new THREE.Vector3;
+  function onDeviceMotion( e ){
+   
+   // camera.position.z +=  e.accelerationIncludingGravity.z - e.acceleration.z;
+
+    camera.getWorldDirection(direction);
+    camera.position.addScaledVector(direction, e.accelerationIncludingGravity.z - e.acceleration.z );
+    console.log(camera.position)
+    camera.updateProjectionMatrix();
+  }
   this.startApp = function (event) {
     sound.play();
+
     if (isMobileDevice()) {
+      setupVideoTexture();
       controls = new DeviceOrientationControls(camera);
       controls.connect();
+      addEventListeners()
     } else {
       controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
@@ -305,7 +365,7 @@ export default function ARScene(_container, _loadProgressCallback) {
       near: 62.650000000000006,
       far: 10000,
       x: 2.71,
-      y: 3.59,
+      y: 12.59,
       z: 0,
       target: { x: 0, y: 0, z: 0 },
       shadowMap: { size: 512, near: 0.5, far: 500 },
